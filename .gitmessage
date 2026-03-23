@@ -1,0 +1,9 @@
+# [type]<scope>: description courte en français
+#
+# Ex. [chore]<init>: premier import hi-keola-api
+# Sans scope : [docs]: message
+#
+# Types : feat | fix | docs | style | refactor | perf | test | chore | ci
+# Scopes : init | api | bot | stats | tags | format | env | deps | lint
+#
+# Corps optionnel après une ligne vide (contexte, références #issue).

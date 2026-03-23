@@ -1,0 +1,36 @@
+# Dépendances
+node_modules/
+
+# Secrets et environnement local (ne jamais versionner)
+.env
+.env.local
+.env.*.local
+
+# Logs et debug
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / éditeur
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Couverture / build éventuels
+coverage/
+dist/
+build/
+
+# Données persistantes locales (stats messages)
+data/
+
+# Convention de commits (copie locale / personnelle — non versionnée)
+COMMIT_CONVENTION.md
+
+# Arborescence détaillée (documentation locale)
+STRUCTURE.md

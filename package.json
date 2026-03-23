@@ -1,0 +1,26 @@
+{
+  "name": "hi-keola-api",
+  "version": "1.0.0",
+  "description": "Bot Twitch Keola — connexion, filtrage pseudo, préparation du message",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "lint": "eslint ."
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["twitch", "tmi.js", "keola"],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "tmi.js": "^1.8.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.16.0",
+    "eslint": "^9.16.0",
+    "globals": "^15.13.0"
+  }
+}
