@@ -17,6 +17,8 @@ async function startApi(opts = {}) {
 
   const app = fastify({ logger: false });
 
+  app.get("/healthz", async () => ({ ok: true }));
+
   app.get("/messages/stats", async () => {
     const totals = normalizedMessageStore.getTotals();
     const phrases = normalizedMessageStore.listByFrequency();
