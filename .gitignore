@@ -16,6 +16,7 @@ npm-debug.log*
 Thumbs.db
 
 # IDE / éditeur
+.cursor/
 .idea/
 .vscode/
 *.swp
