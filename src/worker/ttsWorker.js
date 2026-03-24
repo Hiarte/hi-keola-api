@@ -7,6 +7,10 @@ const { queueStore } = require("../tts/queueStore");
 const { computeTtsJobHash } = require("../tts/ttsJobHash");
 const { getTtsDefaults } = require("../tts/ttsEnv");
 const { QUEUE_STATUS } = require("../tts/constants");
+const {
+  playbackMaxAgeMs,
+  isItemPastPlaybackWindow,
+} = require("../tts/playbackMaxAgeMs");
 const { synthesizeToBuffer } = require("../tts/providers/elevenlabs");
 
 /**
@@ -49,6 +53,17 @@ function markReadyFromCache(item, workerId, cached) {
 async function generateWithProvider(item, workerId) {
   const jobHash = recomputeTtsJobHashForItem(item);
   const defaults = getTtsDefaults();
+  const maxAgeMs = playbackMaxAgeMs();
+
+  if (isItemPastPlaybackWindow(item, maxAgeMs)) {
+    queueStore.updateItem(item.id, {
+      status: QUEUE_STATUS.EXPIRED,
+      workerId,
+      error: `dépasse la fenêtre playback (${maxAgeMs} ms)`,
+    });
+    console.log("[TTS worker] expiré (avant ElevenLabs)", item.id);
+    return;
+  }
 
   if (!defaults.apiKey.trim()) {
     queueStore.updateItem(item.id, {
@@ -93,6 +108,16 @@ async function generateWithProvider(item, workerId) {
       voiceSpeed: defaults.voiceSpeed,
       outputFormat: defaults.outputFormat,
     });
+
+    if (isItemPastPlaybackWindow(item, maxAgeMs)) {
+      queueStore.updateItem(item.id, {
+        status: QUEUE_STATUS.EXPIRED,
+        workerId,
+        error: `expiré pendant la synthèse (fenêtre ${maxAgeMs} ms)`,
+      });
+      console.log("[TTS worker] expiré (après ElevenLabs, fichier ignoré)", item.id);
+      return;
+    }
 
     const safeVoice = voiceId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48);
     const sub = jobHash.slice(0, 2);
@@ -143,6 +168,17 @@ async function generateWithProvider(item, workerId) {
  * @param {string} workerId
  */
 async function processItem(item, workerId) {
+  const maxAgeMs = playbackMaxAgeMs();
+  if (isItemPastPlaybackWindow(item, maxAgeMs)) {
+    queueStore.updateItem(item.id, {
+      status: QUEUE_STATUS.EXPIRED,
+      workerId,
+      error: `dépasse la fenêtre playback (${maxAgeMs} ms)`,
+    });
+    console.log("[TTS worker] expiré (cache / synthèse ignorés)", item.id);
+    return;
+  }
+
   const jobHash = recomputeTtsJobHashForItem(item);
 
   if (audioCacheStore.hasByTtsJobHash(jobHash)) {

@@ -11,9 +11,15 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["twitch", "tmi.js", "keola"],
+  "keywords": [
+    "twitch",
+    "tmi.js",
+    "keola"
+  ],
   "license": "UNLICENSED",
   "dependencies": {
+    "@fastify/cors": "^10.1.0",
+    "@fastify/static": "^8.3.0",
     "dotenv": "^16.4.7",
     "fastify": "^5.2.1",
     "tmi.js": "^1.8.5"

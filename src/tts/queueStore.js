@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const path = require("path");
 const { loadJson, saveJson } = require("./persistTtsJson");
 const { QUEUE_STATUS } = require("./constants");
+const { playbackMaxAgeMs } = require("./playbackMaxAgeMs");
 
 const VERSION = 1;
 
@@ -79,13 +80,35 @@ class QueueStore {
    * @returns {object | null}
    */
   claimNextPending(workerId) {
+    const maxAgeMs = playbackMaxAgeMs();
+    const now = Date.now();
+    let expiredAny = false;
+    for (const i of this._state.items) {
+      if (i.status !== QUEUE_STATUS.PENDING) {
+        continue;
+      }
+      const t = i.createdAt;
+      if (typeof t !== "number" || t <= 0) {
+        continue;
+      }
+      if (now - t > maxAgeMs) {
+        i.status = QUEUE_STATUS.EXPIRED;
+        i.error = `dépasse la fenêtre playback (${maxAgeMs} ms)`;
+        i.workerId = undefined;
+        i.updatedAt = now;
+        expiredAny = true;
+      }
+    }
+    if (expiredAny) {
+      this._persist();
+    }
+
     const item = this._state.items.find(
       (i) => i.status === QUEUE_STATUS.PENDING,
     );
     if (!item) {
       return null;
     }
-    const now = Date.now();
     item.status = QUEUE_STATUS.PROCESSING;
     item.workerId = workerId;
     item.startedAt = now;

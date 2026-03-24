@@ -59,6 +59,7 @@ function handleAfterFormat(payload) {
       ...baseRow,
       status: QUEUE_STATUS.READY,
       audioId: cached ? cached.audioId : null,
+      storagePath: cached?.storagePath ?? null,
     });
     return { branch: "cache_hit_message_hash", queueItem };
   }

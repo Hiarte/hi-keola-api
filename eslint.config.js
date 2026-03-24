@@ -22,4 +22,12 @@ module.exports = [
       semi: ["error", "always"],
     },
   },
+  {
+    files: ["test-extension-twitch-lecture-auto/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
+    },
+  },
 ];
