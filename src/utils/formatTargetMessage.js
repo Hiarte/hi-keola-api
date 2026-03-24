@@ -9,6 +9,7 @@ const {
   keepOnlyFirstKeolaEmoteToken,
   pickFirstKeolaEmote,
 } = require("./emotes");
+const { computeCacheHash } = require("./cacheHash");
 
 /** @type {Record<string, string>} */
 const defaultEmoteTags = require(path.join(__dirname, "..", "..", "tags.json"));
@@ -17,13 +18,21 @@ const defaultEmoteTags = require(path.join(__dirname, "..", "..", "tags.json"));
  * @param {string} message
  * @param {object} userstate
  * @param {Record<string, string>} [emoteTags]
- * @returns {{ formattedText: string; allEmotes: string[]; keolaEmotes: string[] }}
+ * @returns {{
+ *   formattedText: string;
+ *   allEmotes: string[];
+ *   keolaEmotes: string[];
+ *   ttsTag: string;
+ *   ttsBody: string;
+ *   cacheHash: string;
+ * }}
  */
 function formatTargetMessage(message, userstate, emoteTags = defaultEmoteTags) {
   const allEmotes = extractEmotesFromMessage(message, userstate);
   const keolaEmotes = pickFirstKeolaEmote(message, userstate);
   const firstKeola = keolaEmotes[0];
   const tag = firstKeola ? emoteTags[firstKeola] : undefined;
+  const ttsTag = tag || "";
 
   let bodyText;
   if (tag) {
@@ -48,10 +57,16 @@ function formatTargetMessage(message, userstate, emoteTags = defaultEmoteTags) {
     formattedText = capitalizedBody;
   }
 
+  const ttsBody = capitalizedBody;
+  const cacheHash = computeCacheHash(ttsTag, ttsBody);
+
   return {
     formattedText,
     allEmotes,
     keolaEmotes,
+    ttsTag,
+    ttsBody,
+    cacheHash,
   };
 }
 

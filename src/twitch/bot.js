@@ -33,18 +33,27 @@ function startBot() {
       return;
     }
 
-    const { formattedText, allEmotes, keolaEmotes } = formatTargetMessage(
-      message,
-      userstate,
-    );
+    const {
+      formattedText,
+      allEmotes,
+      keolaEmotes,
+      ttsTag,
+      ttsBody,
+      cacheHash,
+    } = formatTargetMessage(message, userstate);
 
     console.log("----- MESSAGE -----");
     console.log("Message brut :", message);
     console.log("Emotes détectées :", allEmotes);
     console.log("Emotes gardées :", keolaEmotes);
     console.log("Message formaté :", formattedText);
+    console.log("Hash cache (tag + corps) :", cacheHash);
 
-    const { entry, totals } = normalizedMessageStore.record(formattedText);
+    const { entry, totals } = normalizedMessageStore.record(formattedText, {
+      cacheHash,
+      ttsTag,
+      ttsBody,
+    });
     if (entry) {
       console.log(
         "Stockage — fréquence (ce texte) :",

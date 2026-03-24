@@ -53,9 +53,10 @@ class NormalizedMessageStore {
   /**
    * Enregistre un message déjà normalisé (ex. sortie `formatTargetMessage`).
    * @param {string} formattedText
+   * @param {{ cacheHash?: string; ttsTag?: string; ttsBody?: string }} [meta] — hash de cache TTS (tag + corps distincts du seul texte concaténé)
    * @returns {{ entry: object | null; totals: { totalMessages: number; totalWords: number; uniquePhrases: number } }}
    */
-  record(formattedText) {
+  record(formattedText, meta) {
     if (typeof formattedText !== "string") {
       return {
         entry: null,
@@ -69,6 +70,11 @@ class NormalizedMessageStore {
         totals: this.getTotals(),
       };
     }
+
+    const m = meta && typeof meta === "object" ? meta : {};
+    const cacheHash = typeof m.cacheHash === "string" ? m.cacheHash : "";
+    const ttsTag = typeof m.ttsTag === "string" ? m.ttsTag : "";
+    const ttsBody = typeof m.ttsBody === "string" ? m.ttsBody : "";
 
     const wordsPerMessage = countWords(key);
     const now = Date.now();
@@ -84,12 +90,18 @@ class NormalizedMessageStore {
         firstSeenAt: now,
         lastSeenAt: now,
         totalWordsFromOccurrences: wordsPerMessage,
+        cacheHash,
+        ttsTag,
+        ttsBody,
       };
       this._byText.set(key, entry);
     } else {
       entry.messageCount += 1;
       entry.lastSeenAt = now;
       entry.totalWordsFromOccurrences += wordsPerMessage;
+      entry.cacheHash = cacheHash;
+      entry.ttsTag = ttsTag;
+      entry.ttsBody = ttsBody;
     }
 
     try {
@@ -137,7 +149,7 @@ class NormalizedMessageStore {
   /**
    * Liste triée par fréquence décroissante (pour inspection / API future).
    * @param {number} [limit]
-   * @returns {Array<{ normalizedText: string; messageCount: number; wordsPerMessage: number; firstSeenAt: number; lastSeenAt: number; totalWordsFromOccurrences: number }>}
+   * @returns {Array<{ normalizedText: string; messageCount: number; wordsPerMessage: number; firstSeenAt: number; lastSeenAt: number; totalWordsFromOccurrences: number; cacheHash?: string; ttsTag?: string; ttsBody?: string }>}
    */
   listByFrequency(limit) {
     const rows = [...this._byText.entries()].map(([normalizedText, e]) => ({
