@@ -125,6 +125,32 @@ function pickFirstKeolaEmote(message, userstate) {
   return first ? [first.text] : [];
 }
 
+/**
+ * Le message (hors espaces) est exactement un seul token, et ce token est une seule emote Twitch (plage IRC).
+ * @param {string} message
+ * @param {object} userstate
+ * @returns {boolean}
+ */
+function isSingleEmoteOnlyMessage(message, userstate) {
+  const trimmed = String(message || "").trim();
+  if (!trimmed) {
+    return false;
+  }
+  const occ = extractEmoteOccurrences(message, userstate);
+  if (occ.length !== 1) {
+    return false;
+  }
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  if (tokens.length !== 1) {
+    return false;
+  }
+  const o = occ[0];
+  if (tokens[0] !== o.text) {
+    return false;
+  }
+  return o.start === 0 && o.end === trimmed.length - 1;
+}
+
 module.exports = {
   extractEmoteOccurrences,
   extractEmotesFromMessage,
@@ -132,4 +158,5 @@ module.exports = {
   stripNonKeolaEmoteTokens,
   keepOnlyFirstKeolaEmoteToken,
   pickFirstKeolaEmote,
+  isSingleEmoteOnlyMessage,
 };

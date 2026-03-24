@@ -8,16 +8,26 @@ const {
   stripNonKeolaEmoteTokens,
   keepOnlyFirstKeolaEmoteToken,
   pickFirstKeolaEmote,
+  isSingleEmoteOnlyMessage,
 } = require("./emotes");
 const { computeCacheHash } = require("./cacheHash");
+const { applyTtsWordMap } = require("./ttsWordMap");
 
 /** @type {Record<string, string>} */
 const defaultEmoteTags = require(path.join(__dirname, "..", "..", "tags.json"));
+/** @type {Record<string, string>} */
+const defaultWordMap = require(path.join(
+  __dirname,
+  "..",
+  "..",
+  "tts-word-map.json",
+));
 
 /**
  * @param {string} message
  * @param {object} userstate
  * @param {Record<string, string>} [emoteTags]
+ * @param {Record<string, string>} [wordMap] — mots → texte TTS (voir `tts-word-map.json`)
  * @returns {{
  *   formattedText: string;
  *   allEmotes: string[];
@@ -27,7 +37,12 @@ const defaultEmoteTags = require(path.join(__dirname, "..", "..", "tags.json"));
  *   cacheHash: string;
  * }}
  */
-function formatTargetMessage(message, userstate, emoteTags = defaultEmoteTags) {
+function formatTargetMessage(
+  message,
+  userstate,
+  emoteTags = defaultEmoteTags,
+  wordMap = defaultWordMap,
+) {
   const allEmotes = extractEmotesFromMessage(message, userstate);
   const keolaEmotes = pickFirstKeolaEmote(message, userstate);
   const firstKeola = keolaEmotes[0];
@@ -43,21 +58,41 @@ function formatTargetMessage(message, userstate, emoteTags = defaultEmoteTags) {
   }
 
   const trimmedBody = bodyText.trim();
-  const capitalizedBody =
+  const bodyMapped =
     trimmedBody === ""
       ? ""
-      : firstCapitalize(trimmedBody);
+      : applyTtsWordMap(trimmedBody, wordMap || {});
+  const capitalizedBody =
+    bodyMapped === "" ? "" : firstCapitalize(bodyMapped);
+
+  const appendDot = isSingleEmoteOnlyMessage(message, userstate);
+
+  let ttsBody = capitalizedBody;
+  if (appendDot) {
+    if (tag) {
+      if (!capitalizedBody) {
+        ttsBody = ".";
+      }
+    } else if (!capitalizedBody) {
+      ttsBody = ".";
+    } else if (!capitalizedBody.endsWith(".")) {
+      ttsBody = `${capitalizedBody}.`;
+    }
+  }
 
   let formattedText;
   if (tag) {
-    formattedText = capitalizedBody
-      ? `${tag} ${capitalizedBody}`.trim()
-      : tag;
+    if (capitalizedBody) {
+      formattedText = `${tag} ${capitalizedBody}`.trim();
+    } else if (appendDot) {
+      formattedText = `${tag}.`;
+    } else {
+      formattedText = tag;
+    }
   } else {
-    formattedText = capitalizedBody;
+    formattedText = ttsBody;
   }
 
-  const ttsBody = capitalizedBody;
   const cacheHash = computeCacheHash(ttsTag, ttsBody);
 
   return {
