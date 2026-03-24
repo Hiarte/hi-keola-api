@@ -4,9 +4,12 @@ const tmi = require("tmi.js");
 const { loadEnv } = require("../config/env");
 const { formatTargetMessage } = require("../utils/formatTargetMessage");
 const { normalizedMessageStore } = require("../stats/normalizedMessageStore");
+const { handleAfterFormat } = require("../tts/incomingPipeline");
+const { getTtsDefaults } = require("../tts/ttsEnv");
 
 function startBot() {
   const { TWITCH_CHANNEL, TWITCH_TARGET_USERNAME } = loadEnv();
+  const ttsStreamId = getTtsDefaults().streamId;
 
   const client = new tmi.Client({
     options: { debug: false },
@@ -72,6 +75,17 @@ function startBot() {
       "· textes distincts :",
       totals.uniquePhrases,
     );
+
+    const { branch, queueItem } = handleAfterFormat({
+      streamId: ttsStreamId,
+      originalMessage: message,
+      formattedText,
+      cacheHash,
+      ttsTag,
+      ttsBody,
+    });
+    console.log("TTS file —", branch, "· seq", queueItem.sequence, "· id", queueItem.id);
+
     console.log("-------------------------");
   });
 
